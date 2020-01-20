@@ -261,6 +261,7 @@ public class GameApplication extends Application
 				this.aBall.mSpeedX(-this.aBall.mSpeedX());
 			}
 		}
+		boolean vIsEmpty = true;
 		// collision with bricks 
 		for(List<Brick> vBricks : this.aBricks)
 		{
@@ -268,6 +269,7 @@ public class GameApplication extends Application
 			{
 				if(!vBrick.mIsBroken())
 				{
+					vIsEmpty = false;
 					if
 					(
 						(this.aBall.mX() + vHalfBallWidth > vBrick.mX())
@@ -318,6 +320,10 @@ public class GameApplication extends Application
 					}
 				}
 			}
+		}
+		if(vIsEmpty)
+		{
+			this.mStart();
 		}
 	}
 	
