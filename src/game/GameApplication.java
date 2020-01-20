@@ -1,5 +1,8 @@
 package game;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.event.EventHandler;
@@ -30,14 +33,16 @@ public class GameApplication extends Application
 	private double aTime;
 	private Racket aRacket;
 	private Ball aBall;
+	private List<List<Brick>> aBricks;
 	
 	@Override
 	public void start(Stage pStage) throws Exception 
 	{
-	    pStage.setTitle("JavaFX : Casse-Briques");
+		this.aStage = pStage;
+	    this.aStage.setTitle("JavaFX : Casse-Briques");	    
 		this.aGroup = new Group();
 	    this.aScene = new Scene(this.aGroup);
-	    pStage.setScene(this.aScene);
+	    this.aStage.setScene(this.aScene);
 	    this.aCanvas = new Canvas( 800, 600 );
 	    this.aGroup.getChildren().add(this.aCanvas);
 	    this.aGraphicsContext = this.aCanvas.getGraphicsContext2D();
@@ -83,7 +88,8 @@ public class GameApplication extends Application
 	            }
 	    	}
 	    );
-	    
+
+	    this.aStage.setResizable(false);
 	    this.mLoad();
 	    
 	    new AnimationTimer()
@@ -94,7 +100,7 @@ public class GameApplication extends Application
 	    		mLoop(vCurrentNanoTime);
 	    	}
 	    }.start();	    
-		pStage.show();
+		this.aStage.show();
 	}
 	
 	private void mLoop(double pCurrentNanoTime)
@@ -104,17 +110,18 @@ public class GameApplication extends Application
 		this.aFPSTime += vDeltaTime;
 		
 		double vNanoTimePerSeconds = 1000000000.0;
-		double vFPS = 60;
+		double vMiliTimePerSeconds = vNanoTimePerSeconds / 1000.0;
+		double vFPS = 120;
 		double vNanoTimePerFPS = vNanoTimePerSeconds / vFPS;
-        
+		this.mUpdate(vDeltaTime/vMiliTimePerSeconds);
+        // limit acceleration card overheat and CPU usage ...
 		if(this.aFPSTime > vNanoTimePerFPS)
         {
-			this.mUpdate(vDeltaTime);
 			this.aFrameCount++;
 	    	this.aGraphicsContext.setFill(Color.BLACK);
 	    	this.aGraphicsContext.fillRect(0.0, 0.0, this.aCanvas.getWidth(), this.aCanvas.getHeight());
 	    	this.mDraw(this.aGraphicsContext);
-			this.mDrawFPS(vDeltaTime);
+			//this.mDrawFPS(vDeltaTime);
 			this.aFPSTime = 0.0;
 		}	
 		
@@ -133,7 +140,42 @@ public class GameApplication extends Application
 		this.aRacket = new Racket(new Image("Racket.png"));
 		this.aRacket.mY(560);
 	    this.aBall = new Ball(new Image("Ball.png"));
-	    this.aBall.mIsSticky(true);		
+	    this.mStart();
+	}
+	
+	public void mStart()
+	{
+	    this.aBall.mIsSticky(true);
+		this.aBall.mSpeedX(0.5);
+		this.aBall.mSpeedY(-0.5);
+		if(this.aBricks != null)
+		{
+			for(List<Brick> vBricks : this.aBricks)
+			{
+				if(vBricks != null)
+				{
+					vBricks.clear();
+				}
+			}
+			this.aBricks.clear();
+		}
+		else
+		{
+			this.aBricks = new ArrayList<List<Brick>>();			
+		}
+		Brick vBrick = new Brick(new Image("Blue_brick.png"));
+		double vRatio = this.aCanvas.getWidth() / (vBrick.mWidth() + 2);
+		for(int vYIndex = 0; vYIndex < 6; vYIndex++)
+		{
+			this.aBricks.add(new ArrayList<Brick>());
+			for(int vXIndex = 0; vXIndex < vRatio; vXIndex++)
+			{
+				Brick vArrayBrick = new Brick(new Image("Blue_brick.png"));
+				vArrayBrick.mX(1 + (vXIndex * (vArrayBrick.mWidth() + 2)));
+				vArrayBrick.mY(1 + (vYIndex * (vArrayBrick.mHeight() + 2)));
+				this.aBricks.get(vYIndex).add(vArrayBrick);				
+			}
+		}
 	}
 	
 	public void mUpdate(double pDeltaTime)
@@ -141,12 +183,16 @@ public class GameApplication extends Application
 		this.mOnUpdate(pDeltaTime);        
     }
 	
-	private void mOnUpdate(double vDeltaTime)
+	private void mOnUpdate(double pDeltaTime)
 	{
 		double vHalfBallWidth = this.aBall.mWidth() / 2.0;
 		double vHalfBallHeight = this.aBall.mHeight() / 2.0;
 		double vHalfRacketWidth = this.aRacket.mWidth() / 2.0;
 		double vHalfRacketHeight = this.aRacket.mHeight() / 2.0;
+		
+        this.aRacket.mUpdate(pDeltaTime);
+        this.aBall.mUpdate(pDeltaTime);
+        
 		if(this.aRacket.mX() < (this.aRacket.mWidth()/2))
 		{
 			this.aRacket.mX(vHalfRacketWidth);
@@ -155,13 +201,17 @@ public class GameApplication extends Application
 		{
 			this.aRacket.mX(this.aCanvas.getWidth() - vHalfRacketWidth);
 		}
-        this.aRacket.mUpdate(vDeltaTime/1000000000);
-        this.aBall.mUpdate(vDeltaTime/1000000000);
         if(this.aBall.mIsSticky())
         {
         	this.aBall.mX(this.aRacket.mX());
         	this.aBall.mY(this.aRacket.mY() - vHalfRacketHeight - vHalfBallHeight);
         }
+        else
+        {
+    		this.aBall.mX(this.aBall.mX() + this.aBall.mSpeedX() * pDeltaTime);
+    		this.aBall.mY(this.aBall.mY() + this.aBall.mSpeedY() * pDeltaTime);
+        }
+        
         // too right
 		if( this.aBall.mX() + vHalfBallWidth > this.aCanvas.getWidth() )
 		{
@@ -182,7 +232,7 @@ public class GameApplication extends Application
 		}    
 		if(this.aBall.mY() - vHalfBallHeight > this.aCanvas.getHeight())
 		{
-			this.aBall.mIsSticky(true);
+			this.mStart();
 		}
 		//collision with racket
 		if
@@ -211,12 +261,77 @@ public class GameApplication extends Application
 				this.aBall.mSpeedX(-this.aBall.mSpeedX());
 			}
 		}
+		// collision with bricks 
+		for(List<Brick> vBricks : this.aBricks)
+		{
+			for(Brick vBrick : vBricks)
+			{
+				if(!vBrick.mIsBroken())
+				{
+					if
+					(
+						(this.aBall.mX() + vHalfBallWidth > vBrick.mX())
+						&&
+						(this.aBall.mX() - vHalfBallWidth < vBrick.mX() + vBrick.mWidth())
+						&&
+						(this.aBall.mY() + vHalfBallHeight > vBrick.mY())
+						&&
+						(this.aBall.mY() - vHalfBallHeight < vBrick.mY() + vBrick.mHeight())
+					)
+					{
+						//collision
+						vBrick.mIsBroken(true);
+						if
+						(
+							(this.aBall.mX() < vBrick.mX())
+							||
+							(this.aBall.mX() > vBrick.mX() + vBrick.mWidth())
+						)
+						{
+							this.aBall.mSpeedX(-this.aBall.mSpeedX());
+							if(this.aBall.mX() < vBrick.mX())
+							{
+								this.aBall.mX(vBrick.mX() - vHalfBallWidth);
+							}
+							if(this.aBall.mX() > vBrick.mX() + vBrick.mWidth())
+							{
+								this.aBall.mX(vBrick.mX() + vBrick.mWidth() + vHalfBallWidth);
+							}
+						}
+						if
+						(
+							(this.aBall.mY() < vBrick.mY())
+							||
+							(this.aBall.mY() > vBrick.mY() + vBrick.mHeight())
+						)
+						{
+							this.aBall.mSpeedY(-this.aBall.mSpeedY());
+							if(this.aBall.mY() < vBrick.mY())
+							{
+								this.aBall.mY(vBrick.mY() - vHalfBallHeight);
+							}
+							if(this.aBall.mY() > vBrick.mY() + vBrick.mHeight())
+							{
+								this.aBall.mY(vBrick.mY() + vBrick.mHeight() + vHalfBallHeight);
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 	
 	public void mDraw(GraphicsContext pGraphicsContext)
 	{
 	    this.aRacket.mDraw(pGraphicsContext);
 	    this.aBall.mDraw(pGraphicsContext);
+	    for(List<Brick> vBricks : this.aBricks)
+	    {
+	    	for(Brick vBrick : vBricks)
+	    	{
+	    		vBrick.mDraw(pGraphicsContext);
+	    	}
+	    }
 	}
 	
 	private void mDrawFPS(double pDeltaTime)
@@ -230,7 +345,6 @@ public class GameApplication extends Application
 		this.mDrawText(10.0, 40.0, vFont, "FPS: " + this.aFPS, 0.0, Color.GREEN, Color.BLACK);
 		this.mDrawText(10.0, 60.0, vFont, "FPStime: " + this.aFPSTime / vNanoTimePerSeconds, 0.0, Color.GREEN, Color.BLACK);
 		this.mDrawText(10.0, 80.0, vFont, "n/FPS: " + vNanoTimePerFPS / vNanoTimePerSeconds, 0.0, Color.GREEN, Color.BLACK);
-		
 	}
 	
 	private void mOnMouseMoved(MouseEvent e)

@@ -31,8 +31,7 @@ public class Ball
 	
 	private void mOnUpdate(double pDeltaTime)
 	{
-		this.aX = this.aX + this.aSpeedX * pDeltaTime;
-		this.aY = this.aY + this.aSpeedY * pDeltaTime;
+		
 	}
 	
 	public void mDraw(GraphicsContext pGraphicsContext)
@@ -91,8 +90,6 @@ public class Ball
 		if(this.aIsSticky)
 		{
 			this.aIsSticky = false;
-			this.aSpeedX = 200;
-			this.aSpeedY = -200;
 		}
 	}
 	
