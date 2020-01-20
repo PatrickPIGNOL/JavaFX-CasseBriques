@@ -45,11 +45,10 @@ public class Racket
 	
 	private void mOnMouseMoved(MouseEvent e)
 	{
-		this.mX(e.getX());
-		
+		this.mX(e.getX());		
 	}
 	
-	public void mUpdate(long pDeltaTime)
+	public void mUpdate(double pDeltaTime)
 	{
 		
 	}
@@ -57,14 +56,6 @@ public class Racket
 	public void mDraw(GraphicsContext pGraphicsContext)
 	{
 		Canvas vCanvas = pGraphicsContext.getCanvas();
-		if(this.mX() < 0.0 + (this.aImage.getWidth()/2))
-		{
-			this.mX(0.0 + (this.aImage.getWidth()/2));
-		}
-		if(this.mX() > vCanvas.getWidth() - (this.aImage.getWidth()/2))
-		{
-			this.mX(vCanvas.getWidth() - (this.aImage.getWidth()/2));
-		}
 		pGraphicsContext.drawImage( this.aImage, this.aX - (this.aImage.getWidth() / 2), this.aY - (this.aImage.getHeight() / 2));
 	}
 	
