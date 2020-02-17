@@ -146,8 +146,8 @@ public class GameApplication extends Application
 	public void mStart()
 	{
 	    this.aBall.mIsSticky(true);
-		this.aBall.mSpeedX(0.5);
-		this.aBall.mSpeedY(-0.5);
+		this.aBall.mSpeedX(0.3);
+		this.aBall.mSpeedY(-0.3);
 		if(this.aBricks != null)
 		{
 			for(List<Brick> vBricks : this.aBricks)
